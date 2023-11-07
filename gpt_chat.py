@@ -24,7 +24,7 @@ class GPTChat:
         openai.api_key = api_key
         self.completion_model = "gpt-4-1106-preview"
         self.chat_history = []
-        self.tokenizer.model_max_length = 128000 # 128K context window
+        self.model_max_length = 128000 # 128K context window
 
     def send_message(self, message, systemContent, temperature, top_p):
         """
