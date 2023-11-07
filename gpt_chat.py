@@ -33,16 +33,12 @@ class GPTChat:
         for the API call to complete.
         """
 
-        # Prepare the system content
-        messages_to_send = [
-            {"role": "system", "content": systemContent}
-        ]
+        # Prepare the system content and add previous history
+        messages_to_send = [{"role": "system", "content": systemContent}]
+        # Extend the history instead of appending to avoid nested lists
+        messages_to_send.extend([{"role": history_entry["role"], "content": history_entry["content"]} for history_entry in self.chat_history])
 
-        # Include the entire history in the context if it exists
-        if self.chat_history:
-            messages_to_send.append(self.chat_history)
-        
-        # Add the new message to the context
+        # Add the new user message to the context
         messages_to_send.append({"role": "user", "content": message})
 
         # Start timing the API call
@@ -51,11 +47,11 @@ class GPTChat:
         # Send the message to the API
         try:
             response = openai.ChatCompletion.create(
-                model = self.completion_model,
-                temperature = temperature,
-                top_p = top_p,
-                messages = messages_to_send,
-                max_tokens = 4096 # max response token for GPT-4 turbo
+                model=self.completion_model,
+                temperature=temperature,
+                top_p=top_p,
+                messages=messages_to_send,
+                max_tokens=4096  # max response token for GPT-4 turbo
             )
         except openai.error.InvalidRequestError as e:
             raise e  # Raising the error to be handled by the caller
@@ -67,8 +63,11 @@ class GPTChat:
         # Extract the response content
         message_response = response.choices[0].message['content'].strip()
 
-        # Update the chat history with the new prompt and response
-        self.chat_history.append({"role": "user", "content": message}, {"role": "system", "content": message_response})
+        # Update the chat history with the new user message
+        self.chat_history.append({"role": "user", "content": message})
+
+        # Update the chat history with the new response
+        self.chat_history.append({"role": "assistant", "content": message_response})
 
         # Return the new response
         return message_response
